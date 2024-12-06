@@ -1,77 +1,80 @@
-<!-- This should be the location of the title of the repository, normally the short name -->
-# repo-template
+## dbt-watsonx-presto
 
-<!-- Build Status, is a great thing to have at the top of your repository, it shows that you take your CI/CD as first class citizens -->
-<!-- [![Build Status](https://travis-ci.org/jjasghar/ibm-cloud-cli.svg?branch=master)](https://travis-ci.org/jjasghar/ibm-cloud-cli) -->
+[dbt](https://www.getdbt.com/) enables data analysts and engineers to transform their data using the same practices that software engineers use to build applications.
 
-<!-- Not always needed, but a scope helps the user understand in a short sentance like below, why this repo exists -->
-## Scope
+dbt is the T in ELT. Organize, cleanse, denormalize, filter, rename, and pre-aggregate the raw data in your warehouse so that it's ready for analysis.
 
-The purpose of this project is to provide a template for new open source repositories.
+### Overview
 
-<!-- A more detailed Usage or detailed explaination of the repository here -->
-## Usage
+The `dbt-watsonx-presto` adapter uses [Presto](https://prestodb.io/) as the underlying SQL query engine to enable powerful data transformations and query federation across diverse data sources. With Presto, you can connect to multiple data systems (via available connectors) through a single dbt connection and process SQL queries efficiently at scale.
 
-This repository contains some example best practices for open source repositories:
+Transformations defined in dbt are passed to Presto, which executes these SQL queries by translating them into queries specific to the connected systems. Presto then creates tables, builds views, or manipulates data as defined by your dbt project.
 
-* [LICENSE](LICENSE)
-* [README.md](README.md)
-* [CONTRIBUTING.md](CONTRIBUTING.md)
-* [MAINTAINERS.md](MAINTAINERS.md)
-<!-- A Changelog allows you to track major changes and things that happen, https://github.com/github-changelog-generator/github-changelog-generator can help automate the process -->
-* [CHANGELOG.md](CHANGELOG.md)
+This repository is an evolution of the [dbt-presto](https://github.com/dbt-labs/dbt-presto) adapter, specifically designed for seamless compatibility with both [open-source Presto](https://prestodb.io/) and IBM [watsonx.data Presto](https://www.ibm.com/products/watsonx-data) clusters.
 
-> These are optional
 
-<!-- The following are OPTIONAL, but strongly suggested to have in your repository. -->
-* [dco.yml](.github/dco.yml) - This enables DCO bot for you, please take a look https://github.com/probot/dco for more details.
-* [travis.yml](.travis.yml) - This is a example `.travis.yml`, please take a look https://docs.travis-ci.com/user/tutorial/ for more details.
+Read the official documentation for using watsonx.data with dbt-watsonx-presto -
 
-These may be copied into a new or existing project to make it easier for developers not on a project team to collaborate.
+- [Documentation for IBM Cloud and SaaS offerrings](https://cloud.ibm.com/docs/watsonxdata?topic=watsonxdata-dbt_watsonx_presto)
+- [Documentation for IBM watsonx.data software](https://www.ibm.com/docs/en/watsonx/watsonxdata/2.0.x?topic=dbt-data-build-tool-adapter-presto)
 
-<!-- A notes section is useful for anything that isn't covered in the Usage or Scope. Like what we have below. -->
-## Notes
+### Getting started
 
-**NOTE: While this boilerplate project uses the Apache 2.0 license, when
-establishing a new repo using this template, please use the
-license that was approved for your project.**
+- [Install dbt](https://docs.getdbt.com/docs/core/installation-overview)
+- Read the [introduction](https://docs.getdbt.com/docs/introduction) and [viewpoint](https://docs.getdbt.com/community/resources/viewpoint)
 
-**NOTE: This repository has been configured with the [DCO bot](https://github.com/probot/dco).
-When you set up a new repository that uses the Apache license, you should
-use the DCO to manage contributions. The DCO bot will help enforce that.
-Please contact one of the IBM GH Org stewards.**
-
-<!-- Questions can be useful but optional, this gives you a place to say, "This is how to contact this project maintainers or create PRs -->
-If you have any questions or issues you can create a new [issue here][issues].
-
-Pull requests are very welcome! Make sure your patches are well tested.
-Ideally create a topic branch for every separate change you make. For
-example:
-
-1. Fork the repo
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Added some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
-
-## License
-
-All source files must include a Copyright and License header. The SPDX license header is 
-preferred because it can be easily scanned.
-
-If you would like to see the detailed LICENSE click [here](LICENSE).
-
-```text
-#
-# Copyright IBM Corp. {Year project was created} - {Current Year}
-# SPDX-License-Identifier: Apache-2.0
-#
+### Installation
+To install the `dbt-watsonx-presto` plugin, use pip:
 ```
-## Authors
+$ pip install dbt-watsonx-presto
+```
 
-Optionally, you may include a list of authors, though this is redundant with the built-in
-GitHub list of contributors.
+### Configuration
+#### Setting Up Your Profile
 
-- Author: New OpenSource IBMer <new-opensource-ibmer@ibm.com>
+To connect dbt Core to your Presto clusters, configure the `profiles.yml` file located in the `.dbt/` directory of your home directory. :
 
-[issues]: https://github.com/IBM/repo-template/issues/new
+**Example profiles.yml entry:**
+```
+my_project:
+  outputs:
+    dev:
+      type: presto
+      method: BasicAuth
+      user: username
+      password: password
+      host:  localhost
+      port: 443
+      database: analytics
+      schema: dbt_drew
+      threads: 8
+      ssl_verify: path/to/certificate
+      
+    prod:
+      type: presto
+      method: BasicAuth
+      user: username
+      password: api_key
+      host: 127.0.0.1
+      port: 8080
+      database: analytics
+      schema: dbt_drew
+      threads: 8
+      ssl_verify: true
+      
+  target: dev
+```
+For more detailed instructions on configuring your profiles, refer watsonx.data and presto setup    .
+
+#### Presto-Specific Configuration
+For Presto-specific configurations, such as advanced session properties or Presto connectors, consult the Presto Configuration Guide.
+
+### Contributing
+We welcome contributions to the dbt-watsonx-presto project. Here’s how you can help:
+
+- Report Issues: If you encounter bugs or have feature requests, please submit them via [GitHub Issues](https://github.com/IBM/dbt-watsonx-presto/issues).
+- Submit Code: Follow the [Contributing Guide](CONTRIBUTING.md) to submit pull requests with improvements or new features.
+
+
+### License
+By contributing to dbt-watsonx-presto, you agree that your contributions will be licensed under the [Apache License Version 2.0 (APLv2)](LICENSE).
