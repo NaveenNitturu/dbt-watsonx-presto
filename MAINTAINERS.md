@@ -1,9 +1,9 @@
 # MAINTAINERS
 
-Mo McElaney - mmcelaney@us.ibm.com
+Naga Vivek Karnati - Karnati.Naga.Vivek@ibm.com
 
-JJ Asghar - jja@ibm.com
+Lukmanul Hakkeem A - lukmanul.hakkeem.a@ibm.com
 
-Joe Sepi - joesepi@ibm.com
+Hariharan Ashokan - Hariharan.Ashokan@ibm.com
 
-Brad Topol - btopol@us.ibm.com
+Biju Palliyath - Biju.Palliyath@ibm.com

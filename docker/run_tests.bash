@@ -7,5 +7,5 @@ set -exo pipefail
 docker run \
     --network="dbt-net" \
     -v $PWD/dbt:/root/.dbt \
-    dbt-presto \
+    dbt-watsonx-presto \
     sh -c "dbt init test && cd test && dbt run"

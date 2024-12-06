@@ -1,84 +1,111 @@
-## Contributing In General
-Our project welcomes external contributions. If you have an itch, please feel
-free to scratch it.
+# Contributing to `dbt-watsonx-presto`
 
-To contribute code or documentation, please submit a **FIXME** [pull request](https://github.com/ibm/repo-template/pulls).
+We welcome contributions to `dbt-watsonx-presto`! If you'd like to help, follow the steps below to get started.
 
-A good way to familiarize yourself with the codebase and contribution process is
-to look for and tackle low-hanging fruit in the **FIXME** [issue tracker](https://github.com/ibm/repo-template/issues).
-Before embarking on a more ambitious contribution, please quickly [get in touch](#communication) with us.
+### How to contribute?
 
-**Note: We appreciate your effort, and want to avoid a situation where a contribution
-requires extensive rework (by you or by us), sits in backlog for a long time, or
-cannot be accepted at all!**
+You can contribute to `dbt-watsonx-presto` by forking the repository. For a detailed overview on forking, check out the [GitHub docs on forking](https://help.github.com/en/articles/fork-a-repo). In short, you will need to:
 
-### Proposing new features
+1. Fork the `dbt-watsonx-presto` repository
+2. Clone your fork locally.
+3. Create a new branch for your proposed changes.
+4. Push changes to your fork.
+5. Open a pull request against the `IBM/dbt-watsonx-presto` repository from your fork
 
-If you would like to implement a new feature, please **FIXME** [raise an issue](https://github.com/ibm/repo-template/issues)
-before sending a pull request so the feature can be discussed. This is to avoid
-you wasting your valuable time working on a feature that the project developers
-are not interested in accepting into the code base.
+## Setting up an environment
 
-### Fixing bugs
+There are some tools that will be helpful to you in developing locally. While this list is relevant for `dbt-watsonx-presto`, many of these tools are used commonly across open-source Python projects.
 
-If you would like to fix a bug, please **FIXME** [raise an issue](https://github.com/ibm/repo-template/issues) before sending a
-pull request so it can be tracked.
+### Tools
 
-### Merge approval
+These are the tools used in `dbt-trino` development and testing:
 
-The project maintainers use LGTM (Looks Good To Me) in comments on the code
-review to indicate acceptance. A change requires LGTMs from two of the
-maintainers of each component affected.
+- [`pytest`](https://docs.pytest.org/en/latest/) for defining, discovering, and running tests.
+- [`tox`](https://tox.readthedocs.io/en/latest/) to manage virtual environments across Python versions.
+- [`flake8`](https://flake8.pycqa.org/en/latest/) for code linting.
+- [`black`](https://github.com/psf/black) for code formatting.
+- [`isort`](https://pycqa.github.io/isort/) for sorting imports.
+- [`flaky`](https://opensource.box.com/flaky/): To rerun flaky tests to improve test reliability.
 
-For a list of the maintainers, see the [MAINTAINERS.md](MAINTAINERS.md) page.
+Though understanding all of these tools isn't mandatory, we recommend familiarizing yourself with them to contribute more effectively.
 
-## Legal
+#### Virtual environments
 
-Each source file must include a license header for the Apache
-Software License 2.0. Using the SPDX format is the simplest approach.
-e.g.
+We strongly recommend using a Python virtual environment for development. To set up a new virtual environment, run:
 
+```sh
+python3 -m venv env
+source env/bin/activate
 ```
-/*
-Copyright <holder> All Rights Reserved.
+This will create and activate a new virtual environment, ensuring a clean setup for your development work.
 
-SPDX-License-Identifier: Apache-2.0
-*/
+## Running `dbt-watsonx-presto` in development
+
+### Installation
+
+After [Setting up an environment](#setting-up-an-environment), install the project dependencies by running:
+
+```sh
+pip install --upgrade pip
 ```
+Next, install `dbt-watsonx-presto` (and its dependencies) with:
 
-We have tried to make it as easy as possible to make contributions. This
-applies to how we handle the legal aspects of contribution. We use the
-same approach - the [Developer's Certificate of Origin 1.1 (DCO)](https://github.com/hyperledger/fabric/blob/master/docs/source/DCO1.1.txt) - that the Linux® Kernel [community](https://elinux.org/Developer_Certificate_Of_Origin)
-uses to manage code contributions.
-
-We simply ask that when submitting a patch for review, the developer
-must include a sign-off statement in the commit message.
-
-Here is an example Signed-off-by line, which indicates that the
-submitter accepts the DCO:
-
-```
-Signed-off-by: John Doe <john.doe@example.com>
+```sh
+pip install -e . -r dev_requirements.txt
 ```
 
-You can include this automatically when you commit a change to your
-local git repository using the following command:
+The -e . option installs dbt-watsonx-presto in "editable" mode, meaning any changes you make to the code will be immediately reflected in your local environment.
 
+### Running `dbt-watsonx-presto`
+
+Once you've installed everything, ensure that the dbt command is pointing to the local source code by running:
+
+```sh
+which dbt
 ```
-git commit -s
-```
 
-## Communication
-**FIXME** Please feel free to connect with us on our [Slack channel](link).
+This should show the path to dbt inside your virtual environment. Additionally, ensure your [profile]() is set up to connect to your target database. If needed, create a new profile for connecting to a local Presto or watsonx.data instance
 
-## Setup
-**FIXME** Please add any special setup instructions for your project to help the developer
-become productive quickly.
 
 ## Testing
-**FIXME** Please provide information that helps the developer test any changes they make
-before submitting.
 
-## Coding style guidelines
-**FIXME** Optional, but recommended: please share any specific style guidelines you might
-have for your project.
+Testing is a crucial part of contributing. Once you've made code changes, you should run existing tests and add new ones to ensure the stability and reliability of the project.
+
+
+### Initial setup
+
+To run tests, you will need access to a Presto or watsonx.data instance. Once that's set up, you can proceed with running tests locally.
+
+
+### Running Tests
+
+You can use pytest to run tests. The following commands help you test locally:
+
+
+- Run all unit tests:
+
+```sh
+# run all unit tests in a file
+python3 -m pytest tests/unit/
+```
+- Run a specific test:
+
+```sh
+# run a specific unit test
+python3 -m pytest tests/unit/test_adapter.py::TestPrestoAdapter::test_acquire_connection
+```
+These commands allow you to run tests directly from the command line.
+
+### Adding Test Cases
+Whenever you introduce new features or fix bugs, ensure that you add test cases to verify your changes. This includes writing appropriate unit tests for functionality and integration tests where needed. Well-tested code is critical for maintaining long-term project stability.
+
+## Submitting a Pull Request
+
+Once your changes are complete and tested, it's time to open a pull request:
+
+1. Push your changes to your fork.
+2. Open a pull request from your fork to the IBM/dbt-watsonx-presto repository.
+3. A maintainer will review your PR and may request additional changes or tests.
+4. Once your PR is approved and all tests pass, it will be merged into the main branch.
+
+That's it! Happy coding! :tada:

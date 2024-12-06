@@ -2,16 +2,21 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+The following versions of `dbt-watsonx-presto` are currently being supported with security updates:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+
+| Version | Supported          | Vulnerabilities |
+| ------- | ------------------ | --------------- |
+| 0.1     | :white_check_mark: | 2 medium, 1 low |
+| 0.0.2   | :white_check_mark: | 2 medium, 1 low |
+| 0.0.1   | :white_check_mark: | 2 medium, 1 low |
 
 ## Reporting a Vulnerability
 
-To report a security issue, please email $VMTalias with a description of the issue, the steps you took to create the issue, affected versions, and if known, mitigations for the issue. Our vulnerability management team will acknowledge receiving your email within 3 working days. This project follows a 90 day disclosure timeline.
+If you discover a security vulnerability in `dbt-watsonx-presto`, please report it by emailing [MAINTAINERS](MAINTAINERS.md) with the following details:
+- A description of the issue
+- The steps you took to reproduce the issue
+- Affected versions
+- Mitigation strategies, if known
+
+Our vulnerability management team will acknowledge receipt of your report within 3 working days. We follow a 90-day disclosure timeline to address security issues.

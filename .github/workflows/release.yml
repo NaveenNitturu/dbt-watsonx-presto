@@ -3,32 +3,32 @@ name: Build and Release
 
 on:
   workflow_dispatch:
-  
+
 # Release version number that must be updated for each release
 env:
-  version_number: '0.21.1'
+  version_number: '0.0.1'
 
-jobs:          
+jobs:
   Test:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Python
         uses: actions/setup-python@v2.2.2
-        with: 
+        with:
           python-version: '3.8'
-          
+
       - uses: actions/checkout@v2
 
-      - name: Test release        
+      - name: Test release
         run: |
           python3 -m venv env
           source env/bin/activate
           pip install -r dev_requirements.txt
           pip install twine wheel setuptools
           python setup.py sdist bdist_wheel
-          pip install dist/dbt-presto-*.tar.gz
-          pip install dist/dbt_presto-*-py3-none-any.whl
-          twine check dist/dbt_presto-*-py3-none-any.whl dist/dbt-presto-*.tar.gz
+          pip install dist/dbt-watsonx-presto-*.tar.gz
+          pip install dist/dbt_watsonx_presto-*-py3-none-any.whl
+          twine check dist/dbt_watsonx_presto-*-py3-none-any.whl dist/dbt-watsonx-presto-*.tar.gz
 
   GitHubRelease:
     name: GitHub release
@@ -37,9 +37,9 @@ jobs:
     steps:
       - name: Setup Python
         uses: actions/setup-python@v2.2.2
-        with: 
+        with:
           python-version: '3.8'
-          
+
       - uses: actions/checkout@v2
 
       - name: Bumping version
@@ -54,8 +54,8 @@ jobs:
       - name: Commit version bump and tag
         uses: EndBug/add-and-commit@v7
         with:
-          author_name: 'Leah Antkiewicz'
-          author_email: 'leah.antkiewicz@dbtlabs.com'
+          author_name: 'KNagaVivek'
+          author_email: 'Karnati.Naga.Vivek@ibm.com'
           message: 'Bumping version to ${{env.version_number}}'
           tag: v${{env.version_number}}
           
@@ -74,13 +74,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
           tag_name: v${{env.version_number}}
-          release_name: dbt-presto v${{env.version_number}}
+          release_name: dbt-watsonx-presto v${{env.version_number}}
           prerelease: ${{ steps.release_type.outputs.isPrerelease }}
           body: |
             Tracking [dbt-core v${{env.version_number}}](https://github.com/dbt-labs/dbt/releases/tag/v${{env.version_number}}).
 
             ```sh
-            $ pip install dbt-presto==${{env.version_number}}
+            $ pip install dbt-watsonx-presto==${{env.version_number}}
             ```
           
   PypiRelease:
@@ -108,5 +108,5 @@ jobs:
           pip install -r dev_requirements.txt
           pip install twine wheel setuptools
           python setup.py sdist bdist_wheel
-          twine upload --non-interactive dist/dbt_presto-${{env.version_number}}-py3-none-any.whl dist/dbt-presto-${{env.version_number}}.tar.gz
+          twine upload --non-interactive dist/*
           

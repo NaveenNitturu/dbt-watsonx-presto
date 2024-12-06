@@ -1,20 +1,52 @@
 from contextlib import contextmanager
 
-import dbt.exceptions
-from dbt.adapters.base import Credentials
+from prestodb.dbapi import Cursor, Connection
+from dbt.adapters.contracts.connection import AdapterResponse, Credentials
 from dbt.adapters.sql import SQLConnectionManager
 from dbt.logger import GLOBAL_LOGGER as logger
-
+from dbt.adapters.exceptions.connection import FailedToConnectError
 from dataclasses import dataclass
-from typing import Optional, Dict
-from dbt.helper_types import Port
+from typing import Optional, Dict, Union
+from dbt_common.helper_types import Port
+from dbt_common.exceptions import DbtDatabaseError, DbtRuntimeError
 
-from datetime import datetime
+from datetime import date, datetime
 import decimal
 import re
 import prestodb
 from prestodb.transaction import IsolationLevel
 import sqlparse
+
+class CustomConnection(Connection):
+    def cursor(self):
+        if self.isolation_level != IsolationLevel.AUTOCOMMIT:
+            if self.transaction is None:
+                self.start_custom_transaction()
+        if self.transaction is not None:
+            request = self.transaction._request
+        else:
+            request = self._create_request()
+        return CustomCursor(self, request)
+
+class CustomCursor(Cursor):
+    def query_id(self) -> Optional[str]:
+        return self._query.query_id
+
+    def query(self) -> Optional[str]:
+        return self._query._sql
+
+    def __getattr__(self, attr):
+        return getattr(self._cursor, attr)
+
+class PrestoAdapterResponse(AdapterResponse):
+    query: str = ""
+    query_id: str = ""
+
+    def __init__(self, _message: str, query: str, query_id: str, rows_affected: int):
+        super().__init__(_message=_message)
+        self.query = query
+        self.query_id = query_id
+        self.rows_affected = rows_affected
 
 
 @dataclass
@@ -26,6 +58,7 @@ class PrestoCredentials(Credentials):
     method: Optional[str] = None
     http_headers: Optional[Dict[str, str]] = None
     http_scheme: Optional[str] = None
+    ssl_verify: Optional[Union[bool, str]] = True
     _ALIASES = {
         'catalog': 'database'
     }
@@ -39,7 +72,7 @@ class PrestoCredentials(Credentials):
         return self.host
 
     def _connection_keys(self):
-        return ('host', 'port', 'user', 'database', 'schema')
+        return ('host', 'port', 'user', 'database', 'schema', 'ssl_verify')
 
 
 class ConnectionWrapper(object):
@@ -69,13 +102,13 @@ class ConnectionWrapper(object):
         self.handle.close()
 
     def commit(self):
-        self.handle.commit()
+        pass
 
     def rollback(self):
-        self.handle.rollback()
+        pass
 
     def start_transaction(self):
-        self.handle.start_transaction()
+        pass
 
     def fetchall(self):
         if self._cursor is None:
@@ -96,7 +129,9 @@ class ConnectionWrapper(object):
             bindings = tuple(self._escape_value(b) for b in bindings)
             sql = sql % bindings
 
-        result = self._cursor.execute(sql)
+            result = self._cursor.execute(sql)
+        else:
+            result = self._cursor.execute(sql, params=bindings)
         self._fetch_result = self._cursor.fetchall()
         return result
 
@@ -120,6 +155,9 @@ class ConnectionWrapper(object):
         elif isinstance(value, datetime):
             time_formatted = value.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
             return "TIMESTAMP '{}'".format(time_formatted)
+        elif isinstance(value, date):
+            date_formatted = value.strftime("%Y-%m-%d")
+            return "DATE '{}'".format(date_formatted)
         else:
             raise ValueError('Cannot escape {}'.format(type(value)))
 
@@ -133,20 +171,25 @@ class PrestoConnectionManager(SQLConnectionManager):
             yield
         # TODO: introspect into `DatabaseError`s and expose `errorName`,
         # `errorType`, etc instead of stack traces full of garbage!
+        except prestodb.exceptions.Error as e:
+            res = str(e)
+            if "Failed to establish a new connection" in res:
+                raise FailedToConnectError(res) from e
+            if isinstance(e, prestodb.exceptions.PrestoQueryError):
+                logger.debug("Presto query id: {}".format(e.query_id))
+            logger.debug("Presto error: {}".format(res))
+
+            raise DbtDatabaseError(res)
         except Exception as exc:
             logger.debug("Error while running:\n{}".format(sql))
             logger.debug(exc)
-            raise dbt.exceptions.RuntimeException(str(exc))
+            raise DbtRuntimeError(str(exc))
 
     def add_begin_query(self):
-        connection = self.get_thread_connection()
-        with self.exception_handler('handle.start_transaction()'):
-            connection.handle.start_transaction()
+        pass
 
     def add_commit_query(self):
-        connection = self.get_thread_connection()
-        with self.exception_handler('handle.commit()'):
-            connection.handle.commit()
+        pass
 
     @classmethod
     def open(cls, connection):
@@ -155,21 +198,14 @@ class PrestoConnectionManager(SQLConnectionManager):
             return connection
 
         credentials = connection.credentials
-        if credentials.method == 'ldap':
+        if credentials.method == 'BasicAuth':
             auth = prestodb.auth.BasicAuthentication(
                 credentials.user,
                 credentials.password,
             )
             if credentials.http_scheme and credentials.http_scheme != "https":
-                raise dbt.exceptions.RuntimeException(
-                    "http_scheme must be set to 'https' for 'ldap' method."
-                )
-            http_scheme = "https"
-        elif credentials.method == 'kerberos':
-            auth = prestodb.auth.KerberosAuthentication()
-            if credentials.http_scheme and credentials.http_scheme != "https":
-                raise dbt.exceptions.RuntimeException(
-                    "http_scheme must be set to 'https' for 'kerberos' method."
+                raise DbtRuntimeError(
+                    "http_scheme must be set to 'https' for 'BasicAuth' method."
                 )
             http_scheme = "https"
         else:
@@ -178,7 +214,7 @@ class PrestoConnectionManager(SQLConnectionManager):
 
         # it's impossible for presto to fail here as 'connections' are actually
         # just cursor factories.
-        presto_conn = prestodb.dbapi.connect(
+        presto_conn = CustomConnection(
             host=credentials.host,
             port=credentials.port,
             user=credentials.user,
@@ -189,6 +225,7 @@ class PrestoConnectionManager(SQLConnectionManager):
             auth=auth,
             isolation_level=IsolationLevel.AUTOCOMMIT
         )
+        presto_conn._http_session.verify = credentials.ssl_verify
         connection.state = 'open'
         connection.handle = ConnectionWrapper(presto_conn)
         return connection
@@ -196,7 +233,13 @@ class PrestoConnectionManager(SQLConnectionManager):
     @classmethod
     def get_response(cls, cursor):
         # this is lame, but the cursor doesn't give us anything useful.
-        return 'OK'
+        return PrestoAdapterResponse(
+            _message = "SUCCESS",
+            query = cursor._cursor.query(),
+            query_id = cursor._cursor.query_id(),
+            rows_affected = cursor._cursor.rowcount
+        )
+
 
     def cancel(self, connection):
         connection.handle.cancel()
@@ -230,7 +273,7 @@ class PrestoConnectionManager(SQLConnectionManager):
             )
 
         if cursor is None:
-            raise dbt.exceptions.RuntimeException(
+            raise DbtRuntimeError(
                 "Tried to run an empty query on model '{}'. If you are "
                 "conditionally running\nsql, eg. in a model hook, make "
                 "sure your `else` clause contains valid sql!\n\n"
@@ -238,9 +281,3 @@ class PrestoConnectionManager(SQLConnectionManager):
             )
 
         return connection, cursor
-
-    def execute(self, sql, auto_begin=False, fetch=False):
-        _, cursor = self.add_query(sql, auto_begin)
-        status = self.get_response(cursor)
-        table = self.get_result_from_cursor(cursor)
-        return status, table

@@ -18,12 +18,12 @@
           NULL as numeric_scale
 
       from
-      {{ relation.information_schema('columns') }}
+      {{ relation.information_schema('columns') | lower()}}
 
       where
         table_name = '{{ relation.name }}'
         {% if relation.schema %}
-        and table_schema = '{{ relation.schema | lower }}'
+        and table_schema = '{{ relation.schema }}'
         {% endif %}
       order by ordinal_position
 
@@ -35,6 +35,7 @@
 
 
 {% macro presto__list_relations_without_caching(relation) %}
+{% set information_schema = relation.information_schema() | lower %}
   {% call statement('list_relations_without_caching', fetch_result=True) -%}
     select
       table_catalog as database,
@@ -44,8 +45,8 @@
            when table_type = 'VIEW' then 'view'
            else table_type
       end as table_type
-    from {{ relation.information_schema() }}.tables
-    where table_schema = '{{ relation.schema | lower }}'
+    from {{ information_schema }}.tables
+    where table_schema = '{{ relation.schema }}'
   {% endcall %}
   {{ return(load_result('list_relations_without_caching').table) }}
 {% endmacro %}
@@ -121,9 +122,9 @@
 {# see this issue: https://github.com/fishtown-analytics/dbt/issues/2267 #}
 {% macro presto__information_schema_name(database) -%}
   {%- if database -%}
-    {{ database }}.INFORMATION_SCHEMA
+    {{ database }}.information_schema
   {%- else -%}
-    INFORMATION_SCHEMA
+    information_schema
   {%- endif -%}
 {%- endmacro %}
 
@@ -170,7 +171,7 @@
         select count(*)
         from {{ information_schema }}.schemata
         where catalog_name = '{{ information_schema.database }}'
-          and schema_name = '{{ schema | lower }}'
+          and schema_name = '{{ schema }}'
   {%- endcall %}
   {{ return(load_result('check_schema_exists').table) }}
 {% endmacro %}

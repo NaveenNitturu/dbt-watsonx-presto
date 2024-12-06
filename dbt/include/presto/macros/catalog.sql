@@ -13,11 +13,11 @@
                     table_type as "table_type",
                     null as "table_owner"
 
-                from {{ information_schema }}.tables
+                from {{ information_schema | lower()}}.tables
                 where
                     table_schema != 'information_schema'
                     and
-                    table_schema in ('{{ schemas | join("','") | lower }}')
+                    table_schema in ('{{ schemas | join("','") }}')
 
             ),
 
@@ -34,11 +34,11 @@
                     data_type as "column_type",
                     null as "column_comment"
 
-                from {{ information_schema }}.columns
+                from {{ information_schema | lower()}}.columns
                 where
                     table_schema != 'information_schema'
                     and
-                    table_schema in ('{{ schemas | join("','") | lower }}')
+                    table_schema in ('{{ schemas | join("','") }}')
 
             )
 

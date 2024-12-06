@@ -1,6 +1,6 @@
 presto:
   outputs:
-    dbt_presto:
+    dbt_watsonx_presto:
       type: presto
       threads: 4
       host: presto
@@ -8,6 +8,6 @@ presto:
       user: presto
       database: memory
       schema: default
-  target: dbt_presto
+  target: dbt_watsonx_presto
 config:
     send_anonymous_usage_stats: False

@@ -1,7 +1,7 @@
 FROM fishtownanalytics/dbt:0.15.3
 USER root
 
-ENV DBT_DIR /opt/dbt-presto
+ENV DBT_DIR /opt/dbt-watsonx-presto
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \

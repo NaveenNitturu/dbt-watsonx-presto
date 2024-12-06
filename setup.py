@@ -8,7 +8,7 @@ with open(os.path.join(this_directory, 'README.md')) as f:
     long_description = f.read()
 
 
-package_name = "dbt-presto"
+package_name = "dbt-watsonx-presto"
 
 
 # get this from a separate file
@@ -20,21 +20,12 @@ def _dbt_presto_version():
     with open(_version_path) as f:
         match = re.search(_version_pattern, f.read().strip())
         if match is None:
-            raise ValueError(f'invalid version at {_version_path}')
+            raise ValueError(f'Invalid version at {_version_path}')
         return match.group(1)
 
 
 package_version = _dbt_presto_version()
-description = """The presto adpter plugin for dbt (data build tool)"""
-
-dbt_version = '0.21.1'
-# the package version should be the dbt version, with maybe some things on the
-# ends of it. (0.19.1 vs 0.19.1a1, 0.19.1.1, ...)
-if not package_version.startswith(dbt_version):
-    raise ValueError(
-        f'Invalid setup.py: package_version={package_version} must start with '
-        f'dbt_version={dbt_version}'
-    )
+description = """The Presto adapter plugin for dbt (data build tool)"""
 
 setup(
     name=package_name,
@@ -44,9 +35,8 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
 
-    author='Fishtown Analytics',
-    author_email='info@fishtownanalytics.com',
-    url='https://github.com/fishtown-analytics/dbt',
+    author='IBM watsonx.data',
+    url='https://github.com/IBM/dbt-watsonx-presto',
 
     packages=find_namespace_packages(include=['dbt', 'dbt.*']),
     package_data={
@@ -58,7 +48,18 @@ setup(
         ]
     },
     install_requires=[
-        'dbt-core=={}'.format(dbt_version),
-        'presto-python-client==0.7.0',
-    ]
+        'dbt-core~=1.8',
+        'presto-python-client==0.8.4',
+    ],
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+    ],
+    python_requires=">=3.8",
 )
